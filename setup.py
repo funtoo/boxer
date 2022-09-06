@@ -14,7 +14,7 @@ setuptools.setup(
 	description="Funtoo framework for container generation.",
 	long_description=long_description,
 	long_description_content_type="text/x-rst",
-	url="https://code.funtoo.org/bitbucket/users/drobbins/repos/funtoo-metatools/browse",
+	url="https://code.funtoo.org/bitbucket/users/drobbins/repos/funtoo-boxer/browse",
 	scripts=["bin/boxer"],
 	classifiers=[
 		"Programming Language :: Python :: 3",
