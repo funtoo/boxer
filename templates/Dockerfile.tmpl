@@ -1,0 +1,42 @@
+# we are going to use alpine as our bootstrap container
+ARG BOOTSTRAP
+FROM ${BOOTSTRAP:-alpine:3.13} as builder
+
+WORKDIR /funtoo
+
+# here are all the arguments about arch/subarch ... defined
+ARG ARCH={{arch_desc}}
+ARG SUBARCH={{subarch}}
+ARG RELEASE={{release}}
+ARG BUILD={{build}}
+ARG STAGE3="stage3-${SUBARCH}-${RELEASE}-${BUILD}.tar.xz"
+
+COPY "${STAGE3}" /
+RUN echo "Building Funtoo Container image for ${ARCH} ${SUBARCH}" \
+ && sleep 3 \
+ && apk --no-cache add gnupg tar wget xz \
+ && tar xpf /${STAGE3} --xattrs --xattrs-include='*' --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && echo -e "[global]\n\nrelease = ${RELEASE%%-*}\n" > etc/ego.conf \
+ && rm -f etc/localtime \
+ && ln -s ../usr/share/zoneinfo/UTC etc/localtime \
+ && rm /*.xz
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /funtoo/ /
+RUN echo "Customizing funtoo for the needs of the people." \
+ && rm /etc/fstab \
+ && touch /etc/fstab \
+ && sed -i -e 's/^c/#c/g' /etc/inittab \
+ && ego sync \
+ && emerge -C debian-sources \
+ && rc-update del sysctl boot \
+ && rc-update del hostname boot \
+ && rc-update del loopback boot \
+ && rc-update del udev sysinit \
+ && rc-update del bootmisc boot \
+ && rm -rf /var/git/* \
+ && rm -rf /lib/modules/*
+ENTRYPOINT ["/sbin/init"]
