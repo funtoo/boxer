@@ -22,6 +22,8 @@ CLI_CONFIG = {
 	"target": {"default": None, "action": "store", "help": "Set the target container image type.", "choices":["docker", "sif"], "required": True},
 	"stage": {"default": [], "action": "store", "positional": True, "help": "stage3 tarball to use as source"},
 	"debug": {"default": False, "action": "store_true"},
+	"push": {"default": False, "action": "store_true"},
+	"tag": {"default": None, "action": "store", "help": "Set a tag/name for the resultant container"},
 }
 
 

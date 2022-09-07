@@ -4,20 +4,14 @@ FROM ${BOOTSTRAP:-alpine:3.13} as builder
 
 WORKDIR /funtoo
 
-# here are all the arguments about arch/subarch ... defined
-ARG ARCH={{arch_desc}}
-ARG SUBARCH={{subarch}}
-ARG RELEASE={{release}}
-ARG BUILD={{build}}
-ARG STAGE3="stage3-${SUBARCH}-${RELEASE}-${BUILD}.tar.xz"
+ARG STAGE3="{{stage}}"
 
 COPY "${STAGE3}" /
-RUN echo "Building Funtoo Container image for ${ARCH} ${SUBARCH}" \
+RUN echo "Building Funtoo Container image." \
  && sleep 3 \
  && apk --no-cache add gnupg tar wget xz \
  && tar xpf /${STAGE3} --xattrs --xattrs-include='*' --numeric-owner \
  && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
- && echo -e "[global]\n\nrelease = ${RELEASE%%-*}\n" > etc/ego.conf \
  && rm -f etc/localtime \
  && ln -s ../usr/share/zoneinfo/UTC etc/localtime \
  && rm /*.xz
