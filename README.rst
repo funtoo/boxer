@@ -28,7 +28,10 @@ For the container system you wish to make images for, you will need
 to have that container system installed locally and your user account
 will need permission to use it. In addition, you will also need Python
 3, SubPop, Jinja2 and PyYAML installed and available. This can be
-accomplished by installing funtoo-boxer from PyPi via ``pip install``
+accomplished by installing funtoo-boxer from PyPi via::
+
+  pip install funtoo-boxer
+
 or by installing the ``boxer`` Funtoo package.
 
 Direct-From-Git Option
