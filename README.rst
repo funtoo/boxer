@@ -31,3 +31,31 @@ will need permission to use it. In addition, you will also need Python
 accomplished by installing funtoo-boxer from PyPi via ``pip install``
 or by installing the ``boxer`` Funtoo package.
 
+Direct-From-Git Option
+======================
+
+If you install all necessary dependencies, it's easily possible to
+run boxer from a live git repository. This can be done as follows::
+
+  $ git clone
+  $ cd funtoo-boxer
+  $ export PYTHONPATH=$(pwd)
+  $ bin/boxer
+
+Generating Docker Containers
+============================
+
+Here is an example of using boxer to create a Docker container from
+a Funtoo stage3, launching it, and entering it and running commands
+inside it::
+
+  $ boxer --target docker --tag funtoo/boxer-generic_64:2022-06-16 /var/tmp/stage3-generic_64-next-2022-06-16.tar.xz
+  ...
+  Successfully built cb852d7b7b6e
+  Successfully tagged funtoo/boxer-generic_64:2022-06-16
+
+  $ docker run -d --name=foobs funtoo/boxer-generic_64:2022-06-16
+
+  $ docker exec -it foobs /bin/bash
+  03ec0962bada / # ego sync
+  ...
