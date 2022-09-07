@@ -3,10 +3,11 @@
 import logging
 import os
 import pathlib
+import shutil
 
 from boxer.model import set_model
 from boxer.pretty_logging import TornadoPrettyLogFormatter
-from subpop.config import SubPopModel
+from subpop.config import SubPopModel, ConfigurationError
 from boxer.context import GitRepositoryLocator
 
 
@@ -36,9 +37,14 @@ class BoxerConfig(SubPopModel):
 			raise FileNotFoundError(f"Cannot find stage: {stage}")
 		self.stage = stage
 		self.target = target
-		self.root = GitRepositoryLocator().root
+		try:
+			self.root = GitRepositoryLocator().root
+		except ConfigurationError:
+			self.root = f"/var/tmp/boxer_{os.getlogin()}_{os.getpid()}"
 		self.tmp = self.root + "/tmp"
-		os.makedirs(self.tmp, exist_ok=True)
+		if os.path.exists(self.tmp):
+			shutil.rmtree(self.tmp)
+		os.makedirs(self.tmp, exist_ok=False, mode=0o700)
 		self.log = logging.getLogger(self.logger_name)
 		self.log.propagate = False
 		if debug:
