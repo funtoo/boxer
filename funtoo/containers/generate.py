@@ -10,6 +10,8 @@ async def start():
 	try:
 		if containers.model.target == "docker":
 			containers.docker.create_docker_container()
+		elif containers.model.target == "sif":
+			containers.singularity.create_singularity_container()
 		else:
 			containers.model.log.error("target not supported.")
 	except ChildProcessError as e:

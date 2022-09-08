@@ -24,7 +24,6 @@ RUN echo "Customizing funtoo for the needs of the people." \
  && rm /etc/fstab \
  && touch /etc/fstab \
  && sed -i -e 's/^c/#c/g' /etc/inittab \
- && rm -rf /lib/modules/* \
  && rm -rf /usr/src/linux* \
  && rm -rf /var/db/pkg/sys-kernel/debian-sources* \
  && rc-update del sysctl boot \
