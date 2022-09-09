@@ -119,7 +119,7 @@ the ``docker`` service, and add your current user to the ``docker``
 group if you would like to be able to run ``boxer`` without being
 root::
 
-  $ sudo emerge docker
+  $ sudo emerge app-emulation/docker
   $ sudo rc-update add docker default
   $ sudo rc
   $ sudo usermod -a -G docker $USER
@@ -127,6 +127,9 @@ root::
 
 Create a Docker Container
 -------------------------
+
+If you are in the ``docker`` group, you will now be able to use
+docker to build a Funtoo container.
 
 When generating a Docker container, the container you generate will
 be added to the local Docker image repository, and the tag specified
