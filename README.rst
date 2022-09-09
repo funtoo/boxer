@@ -23,7 +23,7 @@ Official Location
 
 The official location for boxer is at:
 
-https://github.com/funtoo/funtoo-boxer
+https://github.com/funtoo/boxer
 
 Issues for boxer can be filed as GitHub issues or at https://bugs.funtoo.org,
 using an account created at https://auth.funtoo.org/new.
@@ -111,6 +111,23 @@ how to use them.
 Generating Docker Containers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Set up Docker
+-------------
+
+On a Funtoo Linux system, you will need to set up Docker and start
+the ``docker`` service, and add your current user to the ``docker``
+group if you would like to be able to run ``boxer`` without being
+root::
+
+  $ sudo emerge docker
+  $ sudo rc-update add docker default
+  $ sudo rc
+  $ sudo usermod -a -G docker $USER
+  <log out, log back in>
+
+Create a Docker Container
+-------------------------
+
 When generating a Docker container, the container you generate will
 be added to the local Docker image repository, and the tag specified
 by the ``--tag`` option will be applied to the image, if provided.
@@ -130,11 +147,21 @@ inside it::
 Generating Singularity Containers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When generating a Singularity container, the container will by default
-be written to a file named ``stage3-funtoo.sif`` in the current working
-directory. Alternatively, the ``--out <filename>`` option can be used to
-specify an alternate location and/or name. Additionally, the ``--force``
-option can be used to overwrite the target file if it exists.
+Set up Singularity
+------------------
+
+On a Funtoo Linux system, you will simply need to
+``emerge sys-cluster/singularity``. Singularity is a standalone tool
+so it doesn't require a standalone system daemon running like Docker or LXD.
+
+Create a Singularity Container
+------------------------------
+
+When using boxer to generate a Singularity ("sif format") container,
+the container will by default be written to a file named ``stage3-funtoo.sif``
+in the current working directory. Alternatively, the ``--out <filename>``
+option can be used to specify an alternate location and/or name. Additionally,
+the ``--force`` option can be used to overwrite the target file if it exists.
 
 When creating a Singularity container for non-personal or production
 use, it is recommended to run boxer as root, which will allow for
@@ -154,7 +181,7 @@ is also possible to simply execute a binary within the Funtoo environment
 without using instances.
 
 Starting Writable Singularity Funtoo Containers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...............................................
 
 Also note the use of the ``--writable-tmpfs`` option, above. This allows
 singularity (which uses a read-only squashfs filesystem by default) to
