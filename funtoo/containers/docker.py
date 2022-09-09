@@ -25,7 +25,7 @@ def cmd(cwd, cmd: list, desc: str = None):
 		raise ChildProcessError()
 
 
-def create_docker_container():
+def create_container():
 	dfpath = os.path.join(containers.model.root, 'templates', 'Dockerfile.tmpl')
 	args = get_docker_args()
 	try:
@@ -45,7 +45,7 @@ def create_docker_container():
 			cmd(containers.model.tmp, base_cmd, desc="Creating docker container")
 			if args.tag and args.push:
 				cmd(containers.model.tmp, ["docker", "push", args.tag], desc="Pushing container")
-
+			return True
 	except FileNotFoundError as e:
 		containers.model.log.error(f"Could not find template: {dfpath}")
 		raise e

@@ -2,54 +2,33 @@
 
 import argparse
 import sys
-
 from subpop.hub import Hub
-
-from boxer.config.base import BoxerConfig
-
-
-class DoItHub(Hub):
-	@property
-	def pkgtools(self):
-		return globals()["pkgtools"]
-
+from boxer.config.base import DockerConfig, SingularityConfig
+from boxer.common import parse_args
 
 hub = Hub()
 
 import dyne.org.funtoo.boxer.containers as containers
 
 CLI_CONFIG = {
-	"target": {"default": None, "action": "store", "help": "Set the target container image type.", "choices":["docker", "sif"], "required": True},
-	"stage": {"default": [], "action": "store", "positional": True, "help": "stage3 tarball to use as source"},
+	"target": {"default": None, "action": "store", "positional": True, "help": "Set the target container image type.", "choices": ["docker", "sif"]},
+	"stage": {"default": None, "action": "store", "help": "stage3 tarball to use as source"},
 	"debug": {"default": False, "action": "store_true"},
-	"push": {"default": False, "action": "store_true"},
-	"tag": {"default": None, "action": "store", "help": "Set a tag/name for the resultant container"},
+	"sub_args": {"nargs": argparse.REMAINDER}
 }
 
 
-def parse_args():
-	ap = argparse.ArgumentParser()
-	for arg, kwargs in CLI_CONFIG.items():
-		if "positional" in kwargs and kwargs["positional"]:
-			new_kwargs = kwargs.copy()
-			del new_kwargs["positional"]
-			ap.add_argument(arg, **new_kwargs)
-		else:
-			if "os" in kwargs:
-				del kwargs["os"]
-			ap.add_argument("--" + arg, **kwargs)
-	return ap.parse_args()
-
-
 async def main_thread():
-	hub.OPT = parse_args()
-	kwargs = {}
-	for arg in set(CLI_CONFIG.keys()):
-		kwargs[arg] = getattr(hub.OPT, arg)
-	await containers.launch(BoxerConfig, **kwargs)
+	args, extra_args = parse_args(CLI_CONFIG, parse_known=True)
+	print(extra_args)
+	if args.target == "docker":
+		await containers.launch(DockerConfig, debug=args.debug, stage=args.stage, extra_args=extra_args)
+	elif args.target == "sif":
+		await containers.launch(SingularityConfig, debug=args.debug, stage=args.stage, extra_args=extra_args)
 	containers.model.log.debug("Starting.")
 	result = await containers.generate.start()
 	return result
+
 
 if __name__ == "__main__":
 	success = hub.LOOP.run_until_complete(main_thread())

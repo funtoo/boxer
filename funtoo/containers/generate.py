@@ -4,20 +4,22 @@ import sys
 
 import dyne.org.funtoo.boxer.containers as containers
 
+from boxer.config.base import SingularityConfig, DockerConfig
+
 
 async def start():
 	errcode = 0
 	try:
-		if containers.model.target == "docker":
-			containers.docker.create_docker_container()
-		elif containers.model.target == "sif":
-			containers.singularity.create_singularity_container()
-		else:
-			containers.model.log.error("target not supported.")
+		if isinstance(containers.model, SingularityConfig):
+			success = containers.singularity.create_container()
+		elif isinstance(containers.model, DockerConfig):
+			success = containers.docker.create_container()
 	except ChildProcessError as e:
 		errcode = 1
 	finally:
 		if os.path.exists(containers.model.tmp):
 			shutil.rmtree(containers.model.tmp)
+	if not success:
+		errcode = 1
 	sys.exit(errcode)
 

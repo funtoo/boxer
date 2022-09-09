@@ -5,6 +5,7 @@ import os
 import pathlib
 import shutil
 
+from boxer.common import parse_args
 from boxer.model import set_model
 from boxer.pretty_logging import TornadoPrettyLogFormatter
 from subpop.config import SubPopModel, ConfigurationError
@@ -19,24 +20,20 @@ class BoxerConfig(SubPopModel):
 	logger_name = "boxer"
 	stage = None
 	root = None
-	target = None
 	tmp = None
-	tag = None
-	push = None
+	sub = None
 
 	def __init__(self):
 		super().__init__()
 
-	async def initialize(self, stage=None, debug=False, target=None, push=False, tag=None):
-		self.push = push
-		self.tag = tag
+	async def initialize(self, stage=None, debug=False):
+
 		if not stage:
 			raise ValueError("stage not defined.")
 		stage = pathlib.Path(stage).expanduser().resolve()
 		if not stage.exists():
 			raise FileNotFoundError(f"Cannot find stage: {stage}")
 		self.stage = stage
-		self.target = target
 		try:
 			self.root = GitRepositoryLocator().root
 		except ConfigurationError:
@@ -57,8 +54,40 @@ class BoxerConfig(SubPopModel):
 		self.log.addHandler(channel)
 		if debug:
 			self.log.warning("DEBUG enabled")
-		set_model(self.logger_name, self)
+		set_model("containers", self)
 
 
+class DockerConfig(BoxerConfig):
+
+	tag = None
+	push = None
+	sub = "docker"
+
+	CLI_CONFIG = {
+		"push": {"default": False, "action": "store_true"},
+		"tag": {"default": None, "action": "store", "help": "Set a tag/name for the resultant container"},
+	}
+
+	async def initialize(self, stage=None, debug=False, extra_args=None):
+		local_args = parse_args(self.CLI_CONFIG, extra_args)
+		await super().initialize(stage=stage, debug=debug)
+		self.push = local_args.push
+		self.tag = local_args.tag
 
 
+class SingularityConfig(BoxerConfig):
+
+	out = None
+	force = False
+	sub = "singularity"
+
+	CLI_CONFIG = {
+		"out": {"default": None, "action": "store", "help": "Set an output filename/path for .sif file for singularity container."},
+		"force": {"default": False, "action": "store_true", "help": "Force overwrite of existing singularity container."},
+	}
+
+	async def initialize(self, stage=None, debug=False, extra_args=None):
+		local_args = parse_args(self.CLI_CONFIG, extra_args)
+		await super().initialize(stage=stage, debug=debug)
+		self.out = local_args.out
+		self.force = local_args.force

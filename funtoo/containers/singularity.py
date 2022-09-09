@@ -1,19 +1,28 @@
 
 import os
 
-import dyne.org.funtoo.boxer.containers.common as common
 import dyne.org.funtoo.boxer.containers as containers
+
+from boxer.common import cmd
 
 
 def remove(rootfs, path):
 	path = path.lstrip("/")
-	common.cmd(rootfs, ["rm", "-rf", path], desc=f"Cleaning rootfs: {path}")
+	cmd(rootfs, ["rm", "-rf", path], desc=f"Cleaning rootfs: {path}")
 
 
-def create_singularity_container():
+def create_container():
+	if containers.model.out is None:
+		out = os.path.join(os.getcwd(), "funtoo-stage3.sif")
+	else:
+		out = containers.model.out
+	if os.path.exists(out):
+		if not containers.model.force:
+			containers.model.log.error(f"{out} exists -- use --force to overwrite. Aborting.")
+			return False
 	rootfs = os.path.join(containers.model.tmp, "rootfs")
 	os.makedirs(rootfs, exist_ok=False)
-	common.cmd(rootfs,
+	cmd(rootfs,
 	    ["tar", "--numeric-owner", "--xattrs", "--xattrs-include='*'", "-xpf", str(containers.model.stage), "."],
 	    desc="Extracting stage tarball")
 	remove(rootfs, "/usr/src/linux*")
@@ -32,5 +41,8 @@ def create_singularity_container():
 		f.write("""#!/bin/bash
 exec /bin/bash --login
 """)
-	out = os.path.join(os.getcwd(), "funtoo-stage3.sif")
-	common.cmd(containers.model.tmp, ["singularity", "build", out, rootfs], desc="Creating singularity container")
+	build_cmd = ["singularity", "build" ]
+	if containers.model.force:
+		build_cmd.append("-F")
+	build_cmd += [ out, rootfs ]
+	cmd(containers.model.tmp, build_cmd, desc="Creating singularity container")
