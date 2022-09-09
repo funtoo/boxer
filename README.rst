@@ -87,8 +87,8 @@ Direct-From-Git Option
 If you install all necessary dependencies, it's easily possible to
 run boxer from a live git repository. This can be done as follows::
 
-  $ git clone https://github.com/funtoo/funtoo-boxer
-  $ cd funtoo-boxer
+  $ git clone https://github.com/funtoo/boxer
+  $ cd boxer
   $ export PYTHONPATH=$(pwd)
   $ bin/boxer
 
