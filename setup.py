@@ -8,7 +8,7 @@ with open("README.rst", "r") as fh:
 
 setuptools.setup(
 	name="funtoo-boxer",
-	version="1.0.2",
+	version="1.0.3",
 	author="Daniel Robbins",
 	author_email="drobbins@funtoo.org",
 	description="Funtoo framework for container generation.",

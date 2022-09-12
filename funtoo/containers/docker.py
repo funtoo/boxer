@@ -6,6 +6,45 @@ import dyne.org.funtoo.boxer.containers as containers
 from subpop.util import AttrDict
 
 
+dockerfile = """
+# we are going to use alpine as our bootstrap container
+ARG BOOTSTRAP
+FROM ${BOOTSTRAP:-alpine:3.13} as builder
+
+WORKDIR /funtoo
+
+ARG STAGE3="{{stage}}"
+
+COPY "${STAGE3}" /
+RUN echo "Building Funtoo Container image." \
+ && sleep 3 \
+ && apk --no-cache add gnupg tar wget xz \
+ && tar xpf /${STAGE3} --xattrs --xattrs-include='*' --numeric-owner \
+ && sed -i -e 's/#rc_sys=""/rc_sys="docker"/g' etc/rc.conf \
+ && rm -f etc/localtime \
+ && ln -s ../usr/share/zoneinfo/UTC etc/localtime \
+ && rm /*.xz
+
+FROM scratch
+
+WORKDIR /
+COPY --from=builder /funtoo/ /
+RUN echo "Customizing funtoo for the needs of the people." \
+ && rm /etc/fstab \
+ && touch /etc/fstab \
+ && sed -i -e 's/^c/#c/g' /etc/inittab \
+ && rm -rf /usr/src/linux* \
+ && rm -rf /var/db/pkg/sys-kernel/debian-sources* \
+ && rc-update del sysctl boot \
+ && rc-update del hostname boot \
+ && rc-update del loopback boot \
+ && rc-update del udev sysinit \
+ && rc-update del bootmisc boot \
+ && rm -rf /var/git/* \
+ && rm -rf /lib/modules/*
+ENTRYPOINT ["/sbin/init"]
+"""
+
 def get_docker_args():
 	return AttrDict({
 		"push": containers.model.push,
@@ -26,27 +65,21 @@ def cmd(cwd, cmd: list, desc: str = None):
 
 
 def create_container():
-	dfpath = os.path.join(containers.model.root, 'templates', 'Dockerfile.tmpl')
 	args = get_docker_args()
-	try:
-		with open(dfpath, "r") as tempf:
-			template = jinja2.Template(tempf.read())
-			outfile = os.path.join(containers.model.tmp, 'Dockerfile')
-			with open(outfile, "wb") as myf:
-				myf.write(template.render(**args).encode("utf-8"))
-				containers.model.log.debug(f"Output written to {outfile}.")
-			dest_stage = os.path.join(containers.model.tmp, containers.model.stage.name)
-			if os.path.exists(dest_stage):
-				os.unlink(dest_stage)
-			cmd(containers.model.tmp, ["cp", containers.model.stage, "."], desc="Copy stage to temp directory")
-			base_cmd = ["docker", "build", "."]
-			if args.tag:
-				base_cmd += ["-t", args.tag]
-			cmd(containers.model.tmp, base_cmd, desc="Creating docker container")
-			if args.tag and args.push:
-				cmd(containers.model.tmp, ["docker", "push", args.tag], desc="Pushing container")
-			return True
-	except FileNotFoundError as e:
-		containers.model.log.error(f"Could not find template: {dfpath}")
-		raise e
+	template = jinja2.Template(dockerfile)
+	outfile = os.path.join(containers.model.tmp, 'Dockerfile')
+	with open(outfile, "wb") as myf:
+		myf.write(template.render(**args).encode("utf-8"))
+		containers.model.log.debug(f"Output written to {outfile}.")
+	dest_stage = os.path.join(containers.model.tmp, containers.model.stage.name)
+	if os.path.exists(dest_stage):
+		os.unlink(dest_stage)
+	cmd(containers.model.tmp, ["cp", containers.model.stage, "."], desc="Copy stage to temp directory")
+	base_cmd = ["docker", "build", "."]
+	if args.tag:
+		base_cmd += ["-t", args.tag]
+	cmd(containers.model.tmp, base_cmd, desc="Creating docker container")
+	if args.tag and args.push:
+		cmd(containers.model.tmp, ["docker", "push", args.tag], desc="Pushing container")
+	return True
 
