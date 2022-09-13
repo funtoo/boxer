@@ -75,7 +75,7 @@ def create_container():
 	if os.path.exists(dest_stage):
 		os.unlink(dest_stage)
 	cmd(containers.model.tmp, ["cp", containers.model.stage, "."], desc="Copy stage to temp directory")
-	base_cmd = ["docker", "build", "."]
+	base_cmd = ["docker", "build", "--rm", "."]
 	if args.tag:
 		base_cmd += ["-t", args.tag]
 	cmd(containers.model.tmp, base_cmd, desc="Creating docker container")
